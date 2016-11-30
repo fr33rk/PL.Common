@@ -5,7 +5,6 @@ using System.IO.Compression;
 
 namespace PL.Logger
 {
-
 	/// <summary>Log event arguments used in the OnLog event of the log file.
 	/// </summary>
 	public class LogEventArgs : EventArgs
@@ -23,8 +22,7 @@ namespace PL.Logger
 		public string Message { get; private set; }
 	}
 
-	/// <summary>
-	/// General log file for .net applications. 
+	/// <summary>General log file for .net applications.
 	/// General usage:
 	///    Create with constructor
 	///    Set LogLevel. Log lines of this level and higher are actually written in the log file.
@@ -34,14 +32,15 @@ namespace PL.Logger
 	///    Dispose the log file.
 	///    LogFile is Thread safe!
 	/// </summary>
-	public class LogFile : IDisposable
+	public class LogFile : IDisposable, ILogFile
 	{
 		#region Fields
 
 		private const int cMaxFileSize = 1048576; // 1 MB
+		private bool mUseSingleLineLogging;
 
 		// Object used for locking (Thread safety)
-		private object mLockObject; 
+		private object mLockObject;
 
 		#endregion Fields
 
@@ -51,17 +50,19 @@ namespace PL.Logger
 		/// </summary>
 		/// <param name="sName">The second part of the name of the log file. The first part is the domain name.</param>
 		public LogFile(String sName)
-			: this(sName, DefaultLogLevel, cMaxFileSize)
+			: this(sName, DefaultLogLevel, cMaxFileSize, true)
 		{
 			// Nothing additional to do here.
 		}
 
-		/// <summary>Create the LogFile class. The log file will be written in the same folder as the executable by default.
+		/// <summary>
+		/// Create the LogFile class. The log file will be written in the same folder as the executable by default.
 		/// </summary>
 		/// <param name="sName">The second part of the name of the log file. The first part is the domain name.</param>
-		/// <param name="logLevel">The log level.</param>
-		/// <param name="maxFileSize">Maximum size of the file.</param>
-		public LogFile(String sName, LogLevel logLevel, int maxFileSize)
+		/// <param name="logLevel">The minimum log level. E.g when set to info, debug messages wont be logged.</param>
+		/// <param name="maxFileSize">Maximum size of the file in bytes.</param>
+		/// <param name="useSingleLineLogging">if set to <c>true</c> multi line log entries will be rewritten to single line logs.</param>
+		public LogFile(String sName, LogLevel logLevel, int maxFileSize, bool useSingleLineLogging)
 		{
 			if (sName.Length > 0)
 			{
@@ -83,6 +84,7 @@ namespace PL.Logger
 			mLoglevel = logLevel;
 			this.mMaxFileSize = maxFileSize;
 			mEnableArchiving = true;
+			mUseSingleLineLogging = useSingleLineLogging;
 
 			mLockObject = new object();
 		}
@@ -112,10 +114,17 @@ namespace PL.Logger
 				// free managed resources
 			}
 
-			mFile.Dispose();
+			try
+			{
+				mFile.Dispose();
+			}
+			catch (ObjectDisposedException)
+			{
+				// mFile is already closed/disposed apparently. Have not found a method that can test if a filestream is open or not.
+			}
 		}
 
-		#endregion
+		#endregion Constructor
 
 		#region Filename
 
@@ -127,12 +136,12 @@ namespace PL.Logger
 			private set;
 		}
 
-		#endregion
+		#endregion Filename
 
 		#region LogLevel
 
 		/// <summary>The log-level is an indication of the severity of the log message. Each log-line should be set in one of these
-		/// levels. 
+		/// levels.
 		/// </summary>
 		public enum LogLevel
 		{
@@ -144,7 +153,7 @@ namespace PL.Logger
 			/// </summary>
 			Error,
 
-			/// <summary>Use of deprecated APIs, poor use of API, 'almost' errors, other runtime situations that are undesirable or unexpected, but not necessarily "wrong". 
+			/// <summary>Use of deprecated APIs, poor use of API, 'almost' errors, other runtime situations that are undesirable or unexpected, but not necessarily "wrong".
 			/// </summary>
 			Warning,
 
@@ -178,7 +187,7 @@ namespace PL.Logger
 		/// </summary>
 		private LogLevel mLoglevel;
 
-		#endregion
+		#endregion LogLevel
 
 		#region Log line writing
 
@@ -187,8 +196,7 @@ namespace PL.Logger
 		/// </summary>
 		private StreamWriter mFile;
 
-		/// <summary>
-		/// Write the log start line. 
+		/// <summary>Write the log start line.
 		/// </summary>
 		public void WriteLogStart()
 		{
@@ -206,8 +214,7 @@ namespace PL.Logger
 			}
 		}
 
-		/// <summary>
-		/// Write the log end line
+		/// <summary>Write the log end line
 		/// </summary>
 		public void WriteLogEnd()
 		{
@@ -244,8 +251,11 @@ namespace PL.Logger
 		{
 			if (loglevel <= mLoglevel)
 			{
-				sLine = sLine.Replace("\r", "<CR>");
-				sLine = sLine.Replace("\n", "<LF>");
+				if (mUseSingleLineLogging)
+				{
+					sLine = sLine.Replace("\r", "<CR>");
+					sLine = sLine.Replace("\n", "<LF>");
+				}
 
 				string logLine = String.Format("{0} [{1, 8}] - {2}", GetTime(), LogLevelToText(loglevel), sLine);
 				TextWriter.Synchronized(mFile).WriteLine(logLine);
@@ -253,13 +263,13 @@ namespace PL.Logger
 				signalLog(logLine);
 
 				if (checkSize)
-				{ 
+				{
 					CheckSize();
 				}
 			}
 		}
 
-		#endregion
+		#endregion Log line writing
 
 		#region HelperFunctions
 
@@ -290,7 +300,7 @@ namespace PL.Logger
 			}
 		}
 
-		#endregion
+		#endregion HelperFunctions
 
 		#region OnLog event
 
