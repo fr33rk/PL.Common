@@ -12,6 +12,7 @@ namespace PL.Common.Socket
 	{
 		public string ServerAddress { get; set; }
 		public int ServerPort { get; set; }
+		/// <summary>Gets or sets the retry interval in ms.</summary>
 		public int RetryInterval { get; set; }
 		public int AliveCheckInterval { get; set; }
 		public string AliveMessage { get; set; }
