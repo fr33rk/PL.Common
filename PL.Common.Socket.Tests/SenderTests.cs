@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using NSubstitute;
-using NUnit.Framework;
-using PL.Logger;
+﻿using NUnit.Framework;
 
 namespace PL.Common.Socket.Tests
 {
@@ -15,7 +8,6 @@ namespace PL.Common.Socket.Tests
 		[Test]
 		public void Sender_Start_TriesToConnectAfterXTime()
 		{
-
 		}
 	}
 }

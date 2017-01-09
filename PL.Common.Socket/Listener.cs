@@ -86,7 +86,7 @@ namespace PL.Common.Socket
 		{
 			try
 			{
-				//blocks (asynchrone) until a client has connected to the server
+				//blocks (asynchronous) until a client has connected to the server
 				var tcpClient = await mTcpListener.AcceptTcpClientAsync();
 
 				mLogFile.Info(

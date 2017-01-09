@@ -17,12 +17,12 @@ namespace PL.Common.Socket
 
 		private readonly ILogFile mLogFile;
 		private TcpClient mClient;
-		private Timer mConnectionTimer;
-		private Timer mAliveCheckTimer;
+		private readonly Timer mConnectionTimer;
+		private readonly Timer mAliveCheckTimer;
 		private const int cDefaultBufferSize = 256;
-		private string mServerAddress;
-		private int mServerPort;
-		private string mAliveMessage;
+		private readonly string mServerAddress;
+		private readonly int mServerPort;
+		private readonly string mAliveMessage;
 
 		#endregion Fields
 

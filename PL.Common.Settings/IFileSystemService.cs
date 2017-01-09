@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace PL.Common.Settings
+﻿namespace PL.Common.Settings
 {
 	/// <summary>Allows unit testing of file system calls by adding a level of indirection.
 	/// </summary>
@@ -28,10 +22,9 @@ namespace PL.Common.Settings
 		/// <returns></returns>
 		string GetEntryAssemblyName();
 
-
 		/// <summary>Ask user to select a folder.</summary>
 		/// <param name="rootFolder">The root folder.</param>
-		/// <returns>The path of the folder first selected in the dialog box or the last folder 
+		/// <returns>The path of the folder first selected in the dialog box or the last folder
 		/// selected by the user. The default is an empty string ("").</returns>
 		string SelectFolderDialog(string rootFolder);
 	}

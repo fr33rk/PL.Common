@@ -1,19 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace PL.Common.Settings
 {
-	/// <summary> Interface for the FileSystem Service 
+	/// <summary> Interface for the FileSystem Service
 	/// </summary>
 	public class FileSystemService : IFileSystemService
 	{
-
 		/// <summary>Opens a text file, reads all lines of the file, and then closes the file.
 		///
 		/// Parameters:
@@ -119,7 +113,7 @@ namespace PL.Common.Settings
 
 		/// <summary>Ask user to select a folder.</summary>
 		/// <param name="rootFolder">The root folder.</param>
-		/// <returns>The path of the folder first selected in the dialog box or the last folder 
+		/// <returns>The path of the folder first selected in the dialog box or the last folder
 		/// selected by the user. The default is an empty string ("").</returns>
 		public string SelectFolderDialog(string rootFolder)
 		{

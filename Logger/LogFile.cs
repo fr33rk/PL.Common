@@ -14,7 +14,7 @@ namespace PL.Logger
 		/// <param name="message">The message.</param>
 		public LogEventArgs(string message)
 		{
-			this.Message = message;
+			Message = message;
 		}
 
 		/// <summary>The log message.
@@ -37,10 +37,10 @@ namespace PL.Logger
 		#region Fields
 
 		private const int cMaxFileSize = 1048576; // 1 MB
-		private bool mUseSingleLineLogging;
+		private readonly bool mUseSingleLineLogging;
 
 		// Object used for locking (Thread safety)
-		private object mLockObject;
+		private readonly object mLockObject;
 
 		#endregion Fields
 
@@ -66,23 +66,20 @@ namespace PL.Logger
 		{
 			if (sName.Length > 0)
 			{
-				this.FileName = string.Format("{0}.{1}.log"
-										 , System.Reflection.Assembly.GetEntryAssembly().Location
-										 , sName);
+				FileName = $"{System.Reflection.Assembly.GetEntryAssembly().Location}.{sName}.log";
 
 				mFile = new StreamWriter(FileName, true);
 			}
 			else
 			{
-				this.FileName = string.Format("{0}.log"
-										 , System.Reflection.Assembly.GetEntryAssembly().Location);
+				FileName = $"{System.Reflection.Assembly.GetEntryAssembly().Location}.log";
 
-				mFile = new StreamWriter(this.FileName, true);
+				mFile = new StreamWriter(FileName, true);
 			}
 
 			mFile.AutoFlush = true;
 			mLoglevel = logLevel;
-			this.mMaxFileSize = maxFileSize;
+			mMaxFileSize = maxFileSize;
 			mEnableArchiving = true;
 			mUseSingleLineLogging = useSingleLineLogging;
 
@@ -133,7 +130,6 @@ namespace PL.Logger
 		public string FileName
 		{
 			get;
-			private set;
 		}
 
 		#endregion Filename
@@ -202,15 +198,12 @@ namespace PL.Logger
 		{
 			lock (mLockObject)
 			{
-				string logLine = string.Format("*********| {0} Logging started |**********\r\n PL.Logger version: {1}\r\n Max file size: {2} bytes\r\n LogLevel set to: {3}"
-											   , GetTime()
-											   , typeof(LogFile).Assembly.GetName().Version
-											   , this.mMaxFileSize.ToString()
-											   , this.mLoglevel.ToString());
+				string logLine =
+					$"*********| {GetTime()} Logging started |**********\r\n PL.Logger version: {typeof(LogFile).Assembly.GetName().Version}\r\n Max file size: {mMaxFileSize.ToString()} bytes\r\n LogLevel set to: {mLoglevel.ToString()}";
 
 				TextWriter.Synchronized(mFile).WriteLine(logLine);
 
-				signalLog(logLine);
+				SignalLog(logLine);
 			}
 		}
 
@@ -220,11 +213,11 @@ namespace PL.Logger
 		{
 			lock (mLockObject)
 			{
-				string logLine = (String)"*********| " + GetTime() + " Logging ended   |**********" + Environment.NewLine;
+				string logLine = "*********| " + GetTime() + " Logging ended   |**********" + Environment.NewLine;
 
 				TextWriter.Synchronized(mFile).WriteLine(logLine);
 
-				signalLog(logLine);
+				SignalLog(logLine);
 			}
 		}
 
@@ -257,10 +250,10 @@ namespace PL.Logger
 					sLine = sLine.Replace("\n", "<LF>");
 				}
 
-				string logLine = String.Format("{0} [{1, 8}] - {2}", GetTime(), LogLevelToText(loglevel), sLine);
+				string logLine = $"{GetTime()} [{LogLevelToText(loglevel),8}] - {sLine}";
 				TextWriter.Synchronized(mFile).WriteLine(logLine);
 
-				signalLog(logLine);
+				SignalLog(logLine);
 
 				if (checkSize)
 				{
@@ -311,20 +304,16 @@ namespace PL.Logger
 		/// <summary>Inform all clients attached to OnLog that a log line has been written.
 		/// </summary>
 		/// <param name="logLine">The log line.</param>
-		private void signalLog(string logLine)
+		private void SignalLog(string logLine)
 		{
-			var handler = OnLog;
-			if (handler != null)
-			{
-				handler(this, new LogEventArgs(logLine));
-			}
+			OnLog?.Invoke(this, new LogEventArgs(logLine));
 		}
 
 		#endregion OnLog event
 
 		#region File size
 
-		private int mMaxFileSize;
+		private readonly int mMaxFileSize;
 		private bool mEnableArchiving;
 
 		/// <summary>Checks the size of the log file and test if it needs to be archived.
@@ -333,12 +322,10 @@ namespace PL.Logger
 		{
 			if (mEnableArchiving)
 			{
-				FileInfo logFileInfo = new FileInfo(this.FileName);
+				FileInfo logFileInfo = new FileInfo(FileName);
 				if (logFileInfo.Length > mMaxFileSize)
 				{
-					WriteLine(string.Format("Current file size {0} exceeds max file size of {1}"
-											, logFileInfo.Length.ToString()
-											, mMaxFileSize.ToString()), LogLevel.Info, false);
+					WriteLine($"Current file size {logFileInfo.Length.ToString()} exceeds max file size of {mMaxFileSize.ToString()}", LogLevel.Info, false);
 					Archive();
 				}
 			}
@@ -352,13 +339,13 @@ namespace PL.Logger
 		{
 			mFile.Close();
 
-			string archivedFileName = this.FileName.Replace(".log", string.Format(".{0}.log", DateTime.Now.ToString("yyyyMMdd.HHmmss")));
-			string archiveName = this.FileName.Replace(".log", ".zip");
+			string archivedFileName = FileName.Replace(".log", $".{DateTime.Now:yyyyMMdd.HHmmss}.log");
+			string archiveName = FileName.Replace(".log", ".zip");
 
 			try
 			{
 				// Rename the log file
-				File.Move(this.FileName, archivedFileName);
+				File.Move(FileName, archivedFileName);
 
 				using (FileStream zipToOpen = new FileStream(archiveName, FileMode.OpenOrCreate))
 				{
@@ -383,14 +370,13 @@ namespace PL.Logger
 			catch (Exception e)
 			{
 				mEnableArchiving = false;
-				WriteLine(string.Format("Error archiving log file {0}.\r\nArchiving is disabled.", e.Message), LogLevel.Error);
+				WriteLine($"Error archiving log file {e.Message}.\r\nArchiving is disabled.", LogLevel.Error);
 			}
 			finally
 			{
 				// Reopen the file stream
-				mFile = new StreamWriter(FileName, true);
-				mFile.AutoFlush = true;
-				WriteLine(string.Format("Continuing log file. Previous log file is {0}", archivedFileName), LogLevel.Info);
+				mFile = new StreamWriter(FileName, true) {AutoFlush = true};
+				WriteLine($"Continuing log file. Previous log file is {archivedFileName}", LogLevel.Info);
 			}
 		}
 
@@ -403,7 +389,7 @@ namespace PL.Logger
 		/// <param name="message">The message.</param>
 		public void Critical(string message)
 		{
-			this.WriteLine(message, LogLevel.Critical);
+			WriteLine(message, LogLevel.Critical);
 		}
 
 		/// <summary>Write an error in the log file.
@@ -411,7 +397,7 @@ namespace PL.Logger
 		/// <param name="message">The message.</param>
 		public void Error(string message)
 		{
-			this.WriteLine(message, LogLevel.Error);
+			WriteLine(message, LogLevel.Error);
 		}
 
 		/// <summary>Write a warning in the log file.
@@ -419,7 +405,7 @@ namespace PL.Logger
 		/// <param name="message">The message.</param>
 		public void Warning(string message)
 		{
-			this.WriteLine(message, LogLevel.Warning);
+			WriteLine(message, LogLevel.Warning);
 		}
 
 		/// <summary>Write information in the log file.
@@ -427,7 +413,7 @@ namespace PL.Logger
 		/// <param name="message">The message.</param>
 		public void Info(string message)
 		{
-			this.WriteLine(message, LogLevel.Info);
+			WriteLine(message, LogLevel.Info);
 		}
 
 		/// <summary>Write a debug message in the log file.
@@ -435,7 +421,7 @@ namespace PL.Logger
 		/// <param name="message">The message.</param>
 		public void Debug(string message)
 		{
-			this.WriteLine(message, LogLevel.Debug);
+			WriteLine(message, LogLevel.Debug);
 		}
 
 		#endregion Shortcuts
