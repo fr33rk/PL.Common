@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PL.Common.Socket", "PL.Comm
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PL.Common.Socket.Tests", "PL.Common.Socket.Tests\PL.Common.Socket.Tests.csproj", "{64931801-E3AA-4947-993B-74763C4BCF98}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PL.Common.Settings", "PL.Common.Settings\PL.Common.Settings.csproj", "{6576716B-89AA-44CB-A666-50F97C8D3840}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{64931801-E3AA-4947-993B-74763C4BCF98}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{64931801-E3AA-4947-993B-74763C4BCF98}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{64931801-E3AA-4947-993B-74763C4BCF98}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6576716B-89AA-44CB-A666-50F97C8D3840}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6576716B-89AA-44CB-A666-50F97C8D3840}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6576716B-89AA-44CB-A666-50F97C8D3840}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6576716B-89AA-44CB-A666-50F97C8D3840}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

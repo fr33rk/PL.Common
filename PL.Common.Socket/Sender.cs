@@ -8,47 +8,70 @@ using PL.Logger;
 
 namespace PL.Common.Socket
 {
-	public class SenderArgs
-	{
-		public string ServerAddress { get; set; }
-		public int ServerPort { get; set; }
-		/// <summary>Gets or sets the retry interval in ms.</summary>
-		public int RetryInterval { get; set; }
-		public int AliveCheckInterval { get; set; }
-		public string AliveMessage { get; set; }
-	}
-
-	public class Sender
+	/// <summary>Wrapper around a TcpClient.
+	///
+	/// </summary>
+	public class Sender : ISender
 	{
 		#region Fields
 
 		private readonly ILogFile mLogFile;
 		private TcpClient mClient;
-		private readonly Timer mConnectionTimer;
-		private readonly Timer mAliveCheckTimer;
-		private readonly SenderArgs mSenderArgs;
+		private Timer mConnectionTimer;
+		private Timer mAliveCheckTimer;
 		private const int cDefaultBufferSize = 256;
+		private string mServerAddress;
+		private int mServerPort;
+		private string mAliveMessage;
 
 		#endregion Fields
 
 		#region Constructor(s)
 
-		/// <summary>Initializes a new instance of the <see cref="Sender"/> class.
+		/// <summary>Initializes a new instance of the <see cref="Sender" /> class.
 		/// </summary>
 		/// <param name="logFile">The log file.</param>
-		/// <param name="args">Object containing all requires external settings.</param>
-		public Sender(ILogFile logFile, SenderArgs args)
+		/// <param name="serverAddress">The server address.</param>
+		/// <param name="serverPort">The server port.</param>
+		/// <param name="retryInterval">The retry interval.</param>
+		/// <param name="aliveCheckInterval">The alive check interval.</param>
+		/// <param name="aliveMessage">The alive message.</param>
+		/// <exception cref="System.InvalidOperationException">Retry interval is not allowed to be less or equal to 0.</exception>
+		public Sender(ILogFile logFile, string serverAddress, int serverPort, int retryInterval, int aliveCheckInterval, string aliveMessage)
 		{
 			mLogFile = logFile;
-			mSenderArgs = args;
-
-			mConnectionTimer = new Timer(args.RetryInterval);
-			mConnectionTimer.Elapsed += TryConnectAsync;
-
-			mAliveCheckTimer = new Timer(args.AliveCheckInterval);
-			mAliveCheckTimer.Elapsed += TestConnection;
-
 			mClient = new TcpClient();
+
+			mServerAddress = serverAddress;
+			mServerPort = serverPort;
+			mAliveMessage = aliveMessage;
+
+			if (retryInterval > 0)
+			{
+				mConnectionTimer = new Timer(retryInterval);
+				mConnectionTimer.Elapsed += TryConnectAsync;
+			}
+			else
+			{
+				throw new InvalidOperationException("Retry interval is not allowed to be less or equal to 0.");
+			}
+
+			if (aliveCheckInterval > 0)
+			{
+				mAliveCheckTimer = new Timer(aliveCheckInterval);
+				mAliveCheckTimer.Elapsed += TestConnection;
+			}
+		}
+
+		/// <summary>Initializes a new instance of the <see cref="Sender"/> class.</summary>
+		/// <param name="logFile">The log file.</param>
+		/// <param name="serverAddress">The server address.</param>
+		/// <param name="serverPort">The server port.</param>
+		/// <param name="retryInterval">The retry interval.</param>
+		public Sender(ILogFile logFile, string serverAddress, int serverPort, int retryInterval)
+			: this(logFile, serverAddress, serverPort, retryInterval, -1, string.Empty)
+		{
+			// Nothing additional to do here.
 		}
 
 		#endregion Constructor(s)
@@ -57,26 +80,33 @@ namespace PL.Common.Socket
 
 		/// <summary>Occurs when data has been received on the socket.
 		/// </summary>
-		public event Action<string> OnDataReceived;
+		public event EventHandler<SocketDataReceivedEventArgs> OnDataReceived;
 
 		/// <summary>Occurs when the sender makes contact to a server.
 		/// </summary>
-		public event Action OnConnect;
+		public event EventHandler OnConnect;
 
 		/// <summary>Occurs when the client is disconnected unexpected. (Server connection lost)
 		/// </summary>
-		public event Action OnDisconnect;
+		public event EventHandler OnDisconnect;
 
 		#endregion Events
 
 		#region Starting and stopping
 
-		/// <summary>Starts the sender.
-		/// </summary>
+		/// <summary>Starts the sender.</summary>
+		/// <exception cref="System.InvalidOperationException">Sender started before it has been prepared.</exception>
 		public void Start()
 		{
-			// Start the connection timer. In the elapsed event the system tries to connect to the server.
-			mConnectionTimer.Start();
+			try
+			{
+				// Start the connection timer. In the elapsed event the system tries to connect to the server.
+				mConnectionTimer.Start();
+			}
+			catch (NullReferenceException)
+			{
+				throw new InvalidOperationException("Sender started before it has been prepared.");
+			}
 		}
 
 		/// <summary>Stops this instance.
@@ -85,7 +115,7 @@ namespace PL.Common.Socket
 		{
 			if (mClient.Connected)
 			{
-				mAliveCheckTimer.Stop();
+				mAliveCheckTimer?.Stop();
 				mClient.Close();
 			}
 			else
@@ -112,29 +142,30 @@ namespace PL.Common.Socket
 
 				try
 				{
-					await mClient.ConnectAsync(mSenderArgs.ServerAddress, mSenderArgs.ServerPort);
+					mConnectionTimer.Stop();
+					await mClient.ConnectAsync(mServerAddress, mServerPort);
 
 					if (mClient.Connected)
 					{
-						mConnectionTimer.Stop();
 						mAliveCheckTimer.Start();
 
-						mLogFile.Info(
+						mLogFile?.Info(
 							$"Connected to {((IPEndPoint)mClient.Client.RemoteEndPoint).Address}:{((IPEndPoint)mClient.Client.RemoteEndPoint).Port}");
 
 						// Check if the event needs to be raised.
-						OnConnect?.Invoke();
+						OnConnect?.Invoke(this, EventArgs.Empty);
 
 						// Start reading from the connection
-						NetworkStream stream = mClient.GetStream();
-						byte[] buffer = new byte[cDefaultBufferSize];
+						var stream = mClient.GetStream();
+						var buffer = new byte[cDefaultBufferSize];
 
 						ReadAsync(stream, buffer);
 					}
 				}
 				catch (Exception ex)
 				{
-					mLogFile.Error($"Sender::TryConnectAsync - {ex.Message}");
+					mLogFile?.Error($"Sender::TryConnectAsync - {ex.Message}");
+					mConnectionTimer.Start();
 				}
 				mElapsedBusyFlag = false;
 			}
@@ -151,9 +182,9 @@ namespace PL.Common.Socket
 			if (!mConnectionTestElapsedFlag)
 			{
 				mConnectionTestElapsedFlag = true;
-				if (mClient.Connected && !await WriteAsync(mSenderArgs.AliveMessage))
+				if (mClient.Connected && !await WriteAsync(mAliveMessage))
 				{
-					mLogFile.Debug("Disconnect detected");
+					mLogFile?.Debug("Disconnect detected");
 
 					// Close the socket to clean up. Failing to do so will lead to the error
 					//  "A connect request was made on an already connected socket" when we try to reconnect.
@@ -162,7 +193,7 @@ namespace PL.Common.Socket
 					mAliveCheckTimer.Stop();
 					mConnectionTimer.Stop();
 
-					OnDisconnect?.Invoke();
+					OnDisconnect?.Invoke(this, EventArgs.Empty);
 
 					// Try again to make connection.
 					mClient = new TcpClient();
@@ -181,7 +212,7 @@ namespace PL.Common.Socket
 			mAliveCheckTimer.Stop();
 			mConnectionTimer.Stop();
 
-			OnDisconnect?.Invoke();
+			OnDisconnect?.Invoke(this, EventArgs.Empty);
 
 			// Try again to make connection.
 			mClient = new TcpClient();
@@ -200,22 +231,22 @@ namespace PL.Common.Socket
 		{
 			try
 			{
-				int amountRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+				var amountRead = await stream.ReadAsync(buffer, 0, buffer.Length);
 
 				if (amountRead > 0)
 				{
-					string text = Encoding.UTF8.GetString(buffer, 0, amountRead);
+					var text = Encoding.UTF8.GetString(buffer, 0, amountRead);
 
-					mLogFile.Debug($"Received: {text}");
+					mLogFile?.Debug($"Received: {text}");
 
-					OnDataReceived?.Invoke(text);
+					OnDataReceived?.Invoke(this, new SocketDataReceivedEventArgs(text));
 
 					// Continue reading
 					ReadAsync(stream, buffer);
 				}
 				else
 				{
-					mLogFile.Info("No data found. The connection seems to be closed.");
+					mLogFile?.Info("No data found. The connection seems to be closed.");
 					ResetConnection();
 				}
 			}
@@ -225,7 +256,7 @@ namespace PL.Common.Socket
 			}
 			catch (Exception e)
 			{
-				mLogFile.Error(e.Message);
+				mLogFile?.Error(e.Message);
 				ResetConnection();
 			}
 		}

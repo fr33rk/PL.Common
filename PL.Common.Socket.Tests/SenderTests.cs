@@ -15,15 +15,7 @@ namespace PL.Common.Socket.Tests
 		[Test]
 		public void Sender_Start_TriesToConnectAfterXTime()
 		{
-			var stubLogFile = Substitute.For<ILogFile>();
 
-			var senderArgs = new SenderArgs()
-			{
-				RetryInterval = 10,
-			};
-
-			// Arrange
-			var unitUnderTest = new Sender(stubLogFile, senderArgs);
 		}
 	}
 }
