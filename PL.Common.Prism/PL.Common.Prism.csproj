@@ -59,11 +59,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CommandHelper.cs" />
+    <Compile Include="PlLoggerFacade.cs" />
     <Compile Include="ViewModelBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Logger\PL.Logger.csproj">
+      <Project>{EC4D9E5B-B1A1-49EB-A7DB-49FE70E12906}</Project>
+      <Name>PL.Logger</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

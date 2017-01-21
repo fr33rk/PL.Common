@@ -49,7 +49,7 @@ namespace PL.Logger
 		/// <summary>Create the LogFile class. The log file will be written in the same folder as the executable by default.
 		/// </summary>
 		/// <param name="sName">The second part of the name of the log file. The first part is the domain name.</param>
-		public LogFile(String sName)
+		public LogFile(string sName)
 			: this(sName, DefaultLogLevel, cMaxFileSize, true)
 		{
 			// Nothing additional to do here.
@@ -62,17 +62,24 @@ namespace PL.Logger
 		/// <param name="logLevel">The minimum log level. E.g when set to info, debug messages wont be logged.</param>
 		/// <param name="maxFileSize">Maximum size of the file in bytes.</param>
 		/// <param name="useSingleLineLogging">if set to <c>true</c> multi line log entries will be rewritten to single line logs.</param>
-		public LogFile(String sName, LogLevel logLevel, int maxFileSize, bool useSingleLineLogging)
+		public LogFile(string sName, LogLevel logLevel, int maxFileSize, bool useSingleLineLogging)
 		{
+			var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+				"PanteraLeo",
+				System.Reflection.Assembly.GetEntryAssembly().ManifestModule.Name);
+
+			Directory.CreateDirectory(folder);
+
 			if (sName.Length > 0)
 			{
-				FileName = $"{System.Reflection.Assembly.GetEntryAssembly().Location}.{sName}.log";
+
+				FileName = $"{folder}\\{sName}.log";
 
 				mFile = new StreamWriter(FileName, true);
 			}
 			else
 			{
-				FileName = $"{System.Reflection.Assembly.GetEntryAssembly().Location}.log";
+				FileName = $"{folder}\\{System.Reflection.Assembly.GetEntryAssembly().ManifestModule.Name}.log";
 
 				mFile = new StreamWriter(FileName, true);
 			}
@@ -117,7 +124,7 @@ namespace PL.Logger
 			}
 			catch (ObjectDisposedException)
 			{
-				// mFile is already closed/disposed apparently. Have not found a method that can test if a filestream is open or not.
+				// mFile is already closed/disposed apparently. Have not found a method that can test if a FileStream is open or not.
 			}
 		}
 
@@ -213,7 +220,7 @@ namespace PL.Logger
 		{
 			lock (mLockObject)
 			{
-				string logLine = "*********| " + GetTime() + " Logging ended   |**********" + Environment.NewLine;
+				var logLine = "*********| " + GetTime() + " Logging ended   |**********" + Environment.NewLine;
 
 				TextWriter.Synchronized(mFile).WriteLine(logLine);
 
@@ -226,7 +233,7 @@ namespace PL.Logger
 		/// </summary>
 		/// <param name="sLine">The log line</param>
 		/// <param name="logLevel">The log-level of the message. It is only actually printed when it is lower or equal to the set log-level </param>
-		public void WriteLine(String sLine, LogLevel logLevel)
+		public void WriteLine(string sLine, LogLevel logLevel)
 		{
 			lock (mLockObject)
 			{
@@ -240,7 +247,7 @@ namespace PL.Logger
 		/// <param name="sLine">The log line</param>
 		/// <param name="loglevel">The log-level of the message. It is only actually printed when it is lower or equal to the set log-level</param>
 		/// <param name="checkSize">if set to <c>true</c> [check size].</param>
-		private void WriteLine(String sLine, LogLevel loglevel, bool checkSize)
+		private void WriteLine(string sLine, LogLevel loglevel, bool checkSize)
 		{
 			if (loglevel <= mLoglevel)
 			{
@@ -270,7 +277,7 @@ namespace PL.Logger
 		/// Get the date and time string formatted for the log file.
 		/// </summary>
 		/// <returns>The formatted string</returns>
-		private String GetTime()
+		private string GetTime()
 		{
 			return DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
 		}
@@ -280,7 +287,7 @@ namespace PL.Logger
 		/// </summary>
 		/// <param name="loglevel">The log-level to translate</param>
 		/// <returns>The translated log-level</returns>
-		private String LogLevelToText(LogLevel loglevel)
+		private string LogLevelToText(LogLevel loglevel)
 		{
 			switch (loglevel)
 			{
@@ -322,7 +329,7 @@ namespace PL.Logger
 		{
 			if (mEnableArchiving)
 			{
-				FileInfo logFileInfo = new FileInfo(FileName);
+				var logFileInfo = new FileInfo(FileName);
 				if (logFileInfo.Length > mMaxFileSize)
 				{
 					WriteLine($"Current file size {logFileInfo.Length.ToString()} exceeds max file size of {mMaxFileSize.ToString()}", LogLevel.Info, false);
@@ -339,22 +346,22 @@ namespace PL.Logger
 		{
 			mFile.Close();
 
-			string archivedFileName = FileName.Replace(".log", $".{DateTime.Now:yyyyMMdd.HHmmss}.log");
-			string archiveName = FileName.Replace(".log", ".zip");
+			var archivedFileName = FileName.Replace(".log", $".{DateTime.Now:yyyyMMdd.HHmmss}.log");
+			var archiveName = FileName.Replace(".log", ".zip");
 
 			try
 			{
 				// Rename the log file
 				File.Move(FileName, archivedFileName);
 
-				using (FileStream zipToOpen = new FileStream(archiveName, FileMode.OpenOrCreate))
+				using (var zipToOpen = new FileStream(archiveName, FileMode.OpenOrCreate))
 				{
-					using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
+					using (var archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
 					{
-						ZipArchiveEntry readmeEntry = archive.CreateEntry(archivedFileName);
-						using (Stream zipEntryStream = readmeEntry.Open())
+						var readmeEntry = archive.CreateEntry(archivedFileName);
+						using (var zipEntryStream = readmeEntry.Open())
 						{
-							using (FileStream logFileStream = new FileStream(archivedFileName, FileMode.Open))
+							using (var logFileStream = new FileStream(archivedFileName, FileMode.Open))
 							{
 								logFileStream.Position = 0;
 								logFileStream.CopyTo(zipEntryStream);

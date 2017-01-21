@@ -28,7 +28,8 @@ namespace PL.Common.Settings
 			var filename = mFileService.GetEntryAssemblyName() + "Settings.json";
 			mSettingsFileName = Path.Combine(
 				Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-				"PanteraLeo", "MBC",
+				"PanteraLeo",
+				System.Reflection.Assembly.GetEntryAssembly().ManifestModule.Name,
 				filename
 				);
 
