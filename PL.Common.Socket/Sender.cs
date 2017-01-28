@@ -147,7 +147,7 @@ namespace PL.Common.Socket
 
 					if (mClient.Connected)
 					{
-						mAliveCheckTimer.Start();
+						mAliveCheckTimer?.Start();
 
 						mLogFile?.Info(
 							$"Connected to {((IPEndPoint)mClient.Client.RemoteEndPoint).Address}:{((IPEndPoint)mClient.Client.RemoteEndPoint).Port}");
@@ -209,7 +209,7 @@ namespace PL.Common.Socket
 			//  "A connect request was made on an already connected socket" when we try to reconnect.
 			mClient.Close();
 
-			mAliveCheckTimer.Stop();
+			mAliveCheckTimer?.Stop();
 			mConnectionTimer.Stop();
 
 			OnDisconnect?.Invoke(this, EventArgs.Empty);
@@ -243,11 +243,6 @@ namespace PL.Common.Socket
 
 					// Continue reading
 					ReadAsync(stream, buffer);
-				}
-				else
-				{
-					mLogFile?.Info("No data found. The connection seems to be closed.");
-					ResetConnection();
 				}
 			}
 			catch (ObjectDisposedException)
