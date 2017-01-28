@@ -17,7 +17,7 @@ namespace PL.Common.Prism
         /// <param name="propertyName">Name of a property.</param>
         protected void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
         {
-            base.OnPropertyChanged(propertyName);
+            OnPropertyChanged(propertyName);
             this.InvokeChangeCanExecute();
             UpdateCommandCanExecute();
         }
@@ -26,7 +26,7 @@ namespace PL.Common.Prism
 
         private void UpdateCommandCanExecute()
         {
-            foreach (var command in this.GetType()
+            foreach (var command in GetType()
                 .GetProperties()
                 .Where(pi => pi.PropertyType == typeof(DelegateCommand))
                 .Select(pi => pi.GetValue(this))

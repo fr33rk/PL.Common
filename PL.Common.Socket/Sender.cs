@@ -101,6 +101,7 @@ namespace PL.Common.Socket
 			try
 			{
 				// Start the connection timer. In the elapsed event the system tries to connect to the server.
+				TryConnectAsync();
 				mConnectionTimer.Start();
 			}
 			catch (NullReferenceException)
@@ -117,6 +118,7 @@ namespace PL.Common.Socket
 			{
 				mAliveCheckTimer?.Stop();
 				mClient.Close();
+				OnDisconnect?.Invoke(this, EventArgs.Empty);
 			}
 			else
 			{
@@ -130,14 +132,10 @@ namespace PL.Common.Socket
 
 		private bool mElapsedBusyFlag;
 
-		/// <summary>Timer event which tries the connect to the server asynchronous.
-		/// </summary>
-		/// <param name="source">The (timer) source.</param>
-		/// <param name="e">The <see cref="ElapsedEventArgs"/> instance containing the event data.</param>
-		private async void TryConnectAsync(object source, ElapsedEventArgs e)
+		private async void TryConnectAsync()
 		{
-			if (!mElapsedBusyFlag)
-			{
+			if (mElapsedBusyFlag) return;
+
 				mElapsedBusyFlag = true;
 
 				try
@@ -147,7 +145,7 @@ namespace PL.Common.Socket
 
 					if (mClient.Connected)
 					{
-						mAliveCheckTimer.Start();
+						mAliveCheckTimer?.Start();
 
 						mLogFile?.Info(
 							$"Connected to {((IPEndPoint)mClient.Client.RemoteEndPoint).Address}:{((IPEndPoint)mClient.Client.RemoteEndPoint).Port}");
@@ -169,6 +167,14 @@ namespace PL.Common.Socket
 				}
 				mElapsedBusyFlag = false;
 			}
+
+		/// <summary>Timer event which tries the connect to the server asynchronous.
+		/// </summary>
+		/// <param name="source">The (timer) source.</param>
+		/// <param name="e">The <see cref="ElapsedEventArgs"/> instance containing the event data.</param>
+		private void TryConnectAsync(object source, ElapsedEventArgs e)
+		{
+			TryConnectAsync();
 		}
 
 		private bool mConnectionTestElapsedFlag;
@@ -209,7 +215,7 @@ namespace PL.Common.Socket
 			//  "A connect request was made on an already connected socket" when we try to reconnect.
 			mClient.Close();
 
-			mAliveCheckTimer.Stop();
+			mAliveCheckTimer?.Stop();
 			mConnectionTimer.Stop();
 
 			OnDisconnect?.Invoke(this, EventArgs.Empty);
@@ -243,11 +249,6 @@ namespace PL.Common.Socket
 
 					// Continue reading
 					ReadAsync(stream, buffer);
-				}
-				else
-				{
-					mLogFile?.Info("No data found. The connection seems to be closed.");
-					ResetConnection();
 				}
 			}
 			catch (ObjectDisposedException)

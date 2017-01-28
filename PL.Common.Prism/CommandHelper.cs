@@ -30,10 +30,7 @@ namespace PL.Common.Prism
                 foreach (var commandInterface in commands)
                 {
                     var cmdObj = commandInterface as DelegateCommandBase;
-                    if (cmdObj != null)
-                    {
-                        cmdObj.RaiseCanExecuteChanged();
-                    }
+	                cmdObj?.RaiseCanExecuteChanged();
                 }
             }
         }
