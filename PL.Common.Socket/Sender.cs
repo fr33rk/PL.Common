@@ -101,8 +101,9 @@ namespace PL.Common.Socket
 			try
 			{
 				// Start the connection timer. In the elapsed event the system tries to connect to the server.
-				TryConnectAsync();
 				mConnectionTimer.Start();
+				TryConnectAsync();
+				
 			}
 			catch (NullReferenceException)
 			{
