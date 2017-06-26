@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Compression;
@@ -36,7 +37,7 @@ namespace PL.Logger
 	{
 		#region Fields
 
-		private const int cMaxFileSize = 1048576; // 1 MB
+		private const int MaxFileSize = 1048576; // 1 MB
 		private readonly bool mUseSingleLineLogging;
 
 		// Object used for locking (Thread safety)
@@ -48,9 +49,9 @@ namespace PL.Logger
 
 		/// <summary>Create the LogFile class. The log file will be written in the same folder as the executable by default.
 		/// </summary>
-		/// <param name="sName">The second part of the name of the log file. The first part is the domain name.</param>
-		public LogFile(String sName)
-			: this(sName, DefaultLogLevel, cMaxFileSize, true)
+		/// <param name="name">The second part of the name of the log file. The first part is the domain name.</param>
+		public LogFile(String name)
+			: this(name, DefaultLogLevel, MaxFileSize, true)
 		{
 			// Nothing additional to do here.
 		}
@@ -58,21 +59,45 @@ namespace PL.Logger
 		/// <summary>
 		/// Create the LogFile class. The log file will be written in the same folder as the executable by default.
 		/// </summary>
-		/// <param name="sName">The second part of the name of the log file. The first part is the domain name.</param>
+		/// <param name="name">The second part of the name of the log file. The first part is the domain name.</param>
 		/// <param name="logLevel">The minimum log level. E.g when set to info, debug messages wont be logged.</param>
 		/// <param name="maxFileSize">Maximum size of the file in bytes.</param>
 		/// <param name="useSingleLineLogging">if set to <c>true</c> multi line log entries will be rewritten to single line logs.</param>
-		public LogFile(String sName, LogLevel logLevel, int maxFileSize, bool useSingleLineLogging)
+		public LogFile(string name, LogLevel logLevel, int maxFileSize, bool useSingleLineLogging)
 		{
-			if (sName.Length > 0)
+			var entryAssembly = System.Reflection.Assembly.GetEntryAssembly();
+			string productName;
+
+			if (entryAssembly != null && entryAssembly.Location != null)
 			{
-				FileName = $"{System.Reflection.Assembly.GetEntryAssembly().Location}.{sName}.log";
+				var fileVersionInfo = FileVersionInfo.GetVersionInfo(entryAssembly.Location);
+				var companyName = fileVersionInfo.CompanyName;
+				productName = fileVersionInfo.ProductName;
+
+				if (companyName != String.Empty && productName != String.Empty)
+				{
+					FileName = $@"{Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData)}\{companyName}\{productName}";
+					Directory.CreateDirectory(FileName);
+				}
+				else
+				{
+					throw new InvalidOperationException("Unable to determine log file location due to missing company name or product name.");
+				}
+			}
+			else
+			{
+				throw new InvalidOperationException("Unable to determine log file location due to missing FileVersionInfo");
+			}
+
+			if (name.Length > 0)
+			{
+				FileName = $@"{FileName}\{productName}.{name}.log";
 
 				mFile = new StreamWriter(FileName, true);
 			}
 			else
 			{
-				FileName = $"{System.Reflection.Assembly.GetEntryAssembly().Location}.log";
+				FileName = $@"{FileName}\{productName}.log";
 
 				mFile = new StreamWriter(FileName, true);
 			}
@@ -375,7 +400,7 @@ namespace PL.Logger
 			finally
 			{
 				// Reopen the file stream
-				mFile = new StreamWriter(FileName, true) {AutoFlush = true};
+				mFile = new StreamWriter(FileName, true) { AutoFlush = true };
 				WriteLine($"Continuing log file. Previous log file is {archivedFileName}", LogLevel.Info);
 			}
 		}
