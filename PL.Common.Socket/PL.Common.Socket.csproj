@@ -45,12 +45,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sender.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Logger\PL.Logger.csproj">
-      <Project>{ec4d9e5b-b1a1-49eb-a7db-49fe70e12906}</Project>
-      <Name>PL.Logger</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
