@@ -3,14 +3,17 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Compression;
+using PL.Logger;
 
-namespace PL.Logger
+namespace PL.Common.Logger
 {
+	/// <inheritdoc />
 	/// <summary>Log event arguments used in the OnLog event of the log file.
 	/// </summary>
 	public class LogEventArgs : EventArgs
 	{
-		/// <summary>Initializes a new instance of the <see cref="LogEventArgs"/> class.
+		/// <inheritdoc />
+		/// <summary>Initializes a new instance of the <see cref="T:PL.Common.Logger.LogEventArgs" /> class.
 		/// </summary>
 		/// <param name="message">The message.</param>
 		public LogEventArgs(string message)
@@ -20,7 +23,7 @@ namespace PL.Logger
 
 		/// <summary>The log message.
 		/// </summary>
-		public string Message { get; private set; }
+		public string Message { get; }
 	}
 
 	/// <summary>General log file for .net applications.
@@ -47,10 +50,11 @@ namespace PL.Logger
 
 		#region Constructor
 
+		/// <inheritdoc />
 		/// <summary>Create the LogFile class. The log file will be written in the same folder as the executable by default.
 		/// </summary>
 		/// <param name="name">The second part of the name of the log file. The first part is the domain name.</param>
-		public LogFile(String name)
+		public LogFile(string name)
 			: this(name, DefaultLogLevel, MaxFileSize, true)
 		{
 			// Nothing additional to do here.
@@ -68,13 +72,13 @@ namespace PL.Logger
 			var entryAssembly = System.Reflection.Assembly.GetEntryAssembly();
 			string productName;
 
-			if (entryAssembly != null && entryAssembly.Location != null)
+			if (entryAssembly != null)
 			{
 				var fileVersionInfo = FileVersionInfo.GetVersionInfo(entryAssembly.Location);
 				var companyName = fileVersionInfo.CompanyName;
 				productName = fileVersionInfo.ProductName;
 
-				if (companyName != String.Empty && productName != String.Empty)
+				if (companyName != string.Empty && productName != string.Empty)
 				{
 					FileName = $@"{Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData)}\{companyName}\{productName}";
 					Directory.CreateDirectory(FileName);
@@ -103,7 +107,7 @@ namespace PL.Logger
 			}
 
 			mFile.AutoFlush = true;
-			mLoglevel = logLevel;
+			mLogLevel = logLevel;
 			mMaxFileSize = maxFileSize;
 			mEnableArchiving = true;
 			mUseSingleLineLogging = useSingleLineLogging;
@@ -194,19 +198,19 @@ namespace PL.Logger
 		/// <summary>
 		/// Override the default log level.
 		/// </summary>
-		/// <param name="loglevel">The new log-level</param>
-		public void SetLoglevel(LogLevel loglevel)
+		/// <param name="logLevel">The new log-level</param>
+		public void SetLogLevel(LogLevel logLevel)
 		{
 			lock (mLockObject)
 			{
-				mLoglevel = loglevel;
+				mLogLevel = logLevel;
 			}
 		}
 
 		/// <summary>
 		/// Log-level set for this log file.
 		/// </summary>
-		private LogLevel mLoglevel;
+		private LogLevel mLogLevel;
 
 		#endregion LogLevel
 
@@ -223,8 +227,8 @@ namespace PL.Logger
 		{
 			lock (mLockObject)
 			{
-				string logLine =
-					$"*********| {GetTime()} Logging started |**********\r\n PL.Logger version: {typeof(LogFile).Assembly.GetName().Version}\r\n Max file size: {mMaxFileSize.ToString()} bytes\r\n LogLevel set to: {mLoglevel.ToString()}";
+				var logLine =
+					$"*********| {GetTime()} Logging started |**********\r\n PL.Logger version: {typeof(LogFile).Assembly.GetName().Version}\r\n Max file size: {mMaxFileSize.ToString()} bytes\r\n LogLevel set to: {mLogLevel.ToString()}";
 
 				TextWriter.Synchronized(mFile).WriteLine(logLine);
 
@@ -238,7 +242,7 @@ namespace PL.Logger
 		{
 			lock (mLockObject)
 			{
-				string logLine = "*********| " + GetTime() + " Logging ended   |**********" + Environment.NewLine;
+				var logLine = "*********| " + GetTime() + " Logging ended   |**********" + Environment.NewLine;
 
 				TextWriter.Synchronized(mFile).WriteLine(logLine);
 
@@ -251,7 +255,7 @@ namespace PL.Logger
 		/// </summary>
 		/// <param name="sLine">The log line</param>
 		/// <param name="logLevel">The log-level of the message. It is only actually printed when it is lower or equal to the set log-level </param>
-		public void WriteLine(String sLine, LogLevel logLevel)
+		public void WriteLine(string sLine, LogLevel logLevel)
 		{
 			lock (mLockObject)
 			{
@@ -263,11 +267,11 @@ namespace PL.Logger
 		/// Write a log file entry in the log file.
 		/// </summary>
 		/// <param name="sLine">The log line</param>
-		/// <param name="loglevel">The log-level of the message. It is only actually printed when it is lower or equal to the set log-level</param>
+		/// <param name="logLevel">The log-level of the message. It is only actually printed when it is lower or equal to the set log-level</param>
 		/// <param name="checkSize">if set to <c>true</c> [check size].</param>
-		private void WriteLine(String sLine, LogLevel loglevel, bool checkSize)
+		private void WriteLine(string sLine, LogLevel logLevel, bool checkSize)
 		{
-			if (loglevel <= mLoglevel)
+			if (logLevel <= mLogLevel)
 			{
 				if (mUseSingleLineLogging)
 				{
@@ -275,7 +279,7 @@ namespace PL.Logger
 					sLine = sLine.Replace("\n", "<LF>");
 				}
 
-				string logLine = $"{GetTime()} [{LogLevelToText(loglevel),8}] - {sLine}";
+				var logLine = $"{GetTime()} [{LogLevelToText(logLevel),8}] - {sLine}";
 				TextWriter.Synchronized(mFile).WriteLine(logLine);
 
 				SignalLog(logLine);
@@ -295,7 +299,7 @@ namespace PL.Logger
 		/// Get the date and time string formatted for the log file.
 		/// </summary>
 		/// <returns>The formatted string</returns>
-		private String GetTime()
+		private static string GetTime()
 		{
 			return DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
 		}
@@ -303,11 +307,11 @@ namespace PL.Logger
 		/// <summary>
 		/// Translate the log-level to text.
 		/// </summary>
-		/// <param name="loglevel">The log-level to translate</param>
+		/// <param name="logLevel">The log-level to translate</param>
 		/// <returns>The translated log-level</returns>
-		private String LogLevelToText(LogLevel loglevel)
+		private static string LogLevelToText(LogLevel logLevel)
 		{
-			switch (loglevel)
+			switch (logLevel)
 			{
 				case LogLevel.Debug: return "DEBUG";
 				case LogLevel.Info: return "INFO";
@@ -322,6 +326,7 @@ namespace PL.Logger
 
 		#region OnLog event
 
+		/// <inheritdoc />
 		/// <summary>Occurs when a log line is written in the log file.
 		/// </summary>
 		public event EventHandler<LogEventArgs> OnLog;
@@ -347,7 +352,7 @@ namespace PL.Logger
 		{
 			if (mEnableArchiving)
 			{
-				FileInfo logFileInfo = new FileInfo(FileName);
+				var logFileInfo = new FileInfo(FileName);
 				if (logFileInfo.Length > mMaxFileSize)
 				{
 					WriteLine($"Current file size {logFileInfo.Length.ToString()} exceeds max file size of {mMaxFileSize.ToString()}", LogLevel.Info, false);
@@ -364,22 +369,22 @@ namespace PL.Logger
 		{
 			mFile.Close();
 
-			string archivedFileName = FileName.Replace(".log", $".{DateTime.Now:yyyyMMdd.HHmmss}.log");
-			string archiveName = FileName.Replace(".log", ".zip");
+			var archivedFileName = FileName.Replace(".log", $".{DateTime.Now:yyyyMMdd.HHmmss}.log");
+			var archiveName = FileName.Replace(".log", ".zip");
 
 			try
 			{
 				// Rename the log file
 				File.Move(FileName, archivedFileName);
 
-				using (FileStream zipToOpen = new FileStream(archiveName, FileMode.OpenOrCreate))
+				using (var zipToOpen = new FileStream(archiveName, FileMode.OpenOrCreate))
 				{
-					using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
+					using (var archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
 					{
-						ZipArchiveEntry readmeEntry = archive.CreateEntry(archivedFileName);
-						using (Stream zipEntryStream = readmeEntry.Open())
+						var readmeEntry = archive.CreateEntry(archivedFileName);
+						using (var zipEntryStream = readmeEntry.Open())
 						{
-							using (FileStream logFileStream = new FileStream(archivedFileName, FileMode.Open))
+							using (var logFileStream = new FileStream(archivedFileName, FileMode.Open))
 							{
 								logFileStream.Position = 0;
 								logFileStream.CopyTo(zipEntryStream);

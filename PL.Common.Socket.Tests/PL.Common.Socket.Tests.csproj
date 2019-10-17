@@ -55,10 +55,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Logger\PL.Logger.csproj">
-      <Project>{EC4D9E5B-B1A1-49EB-A7DB-49FE70E12906}</Project>
-      <Name>PL.Logger</Name>
-    </ProjectReference>
     <ProjectReference Include="..\PL.Common.Socket\PL.Common.Socket.csproj">
       <Project>{5BA0485D-819F-40A3-AC95-7DC7B4E902F3}</Project>
       <Name>PL.Common.Socket</Name>

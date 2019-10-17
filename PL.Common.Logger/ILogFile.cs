@@ -1,4 +1,5 @@
 ﻿using System;
+using PL.Common.Logger;
 
 namespace PL.Logger
 {
