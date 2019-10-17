@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.271
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29409.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PL.Common.Socket", "PL.Common.Socket\PL.Common.Socket.csproj", "{5BA0485D-819F-40A3-AC95-7DC7B4E902F3}"
 EndProject
@@ -11,7 +11,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PL.Common.Settings", "PL.Co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PL.Common.Prism", "PL.Common.Prism\PL.Common.Prism.csproj", "{87F76E27-EF8D-454E-B87A-257741EB2BD2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PL.Common.Logger", "PL.Common.Logger\PL.Common.Logger.csproj", "{A5083E1F-5117-495B-AA29-8B0DA4F2F102}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PL.Common.Logger", "PL.Common.Logger\PL.Common.Logger.csproj", "{A5083E1F-5117-495B-AA29-8B0DA4F2F102}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PL.Common.Math", "PL.Common.Math\PL.Common.Math.csproj", "{A0C3E024-8ABA-482A-9EF9-79EC9AFF281F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{A5083E1F-5117-495B-AA29-8B0DA4F2F102}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A5083E1F-5117-495B-AA29-8B0DA4F2F102}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A5083E1F-5117-495B-AA29-8B0DA4F2F102}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0C3E024-8ABA-482A-9EF9-79EC9AFF281F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0C3E024-8ABA-482A-9EF9-79EC9AFF281F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0C3E024-8ABA-482A-9EF9-79EC9AFF281F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0C3E024-8ABA-482A-9EF9-79EC9AFF281F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

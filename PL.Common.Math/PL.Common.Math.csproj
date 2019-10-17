@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Freerk de Leeuw</Authors>
+    <Company>PanterLeo</Company>
+    <Description>Common math module</Description>
+  </PropertyGroup>
+
+</Project>
